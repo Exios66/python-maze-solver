@@ -18,7 +18,7 @@ import os
 import math
 from abc import ABC, abstractmethod
 from theme.theme_manager import Theme, ThemeManager  # This replaces the previous import
-from algorithms.maze_algorithms import DFSMazeGenerator, BFSMazeGenerator
+from algorithms.maze_algorithms import DFSMazeGenerator, BFSMazeGenerator, AStarMazeGenerator, PrimMazeGenerator
 
 # Enhanced logging configuration with better error handling and more features
 def setup_logging():
@@ -319,9 +319,43 @@ class ControlPanel(UIComponent):
         self.algorithms = {
             AlgorithmType.DFS: DFSMazeGenerator(),
             AlgorithmType.BFS: BFSMazeGenerator(),
+            AlgorithmType.ASTAR: AStarMazeGenerator(),
+            AlgorithmType.PRIM: PrimMazeGenerator(),
             # Add other algorithms as they're implemented
         }
 
+        # Add speed slider
+        self.speed_slider = Slider(
+            pygame.Rect(
+                UIConstants.BUTTON_PADDING,
+                screen_height - UIConstants.CONTROL_PANEL_HEIGHT + 70,
+                200,
+                20
+            ),
+            MazeConfig.Animation.MIN_SPEED,
+            MazeConfig.Animation.MAX_SPEED,
+            state.speed,
+            "Animation Speed"
+        )
+        
+        # Add algorithm selector
+        self.algorithm_selector = AlgorithmSelector(
+            screen_width - 220,
+            screen_height - UIConstants.CONTROL_PANEL_HEIGHT + UIConstants.BUTTON_PADDING,
+            200,
+            UIConstants.BUTTON_HEIGHT
+        )
+        
+        # Add info panel
+        self.info_panel = InfoPanel(
+            pygame.Rect(
+                screen_width - 250,
+                screen_height - 300,
+                240,
+                200
+            )
+        )
+    
     def draw(self, screen: pygame.Surface) -> None:
         # Draw panel background
         pygame.draw.rect(
@@ -335,22 +369,41 @@ class ControlPanel(UIComponent):
             screen,
             ThemeManager.get_theme(state.current_theme).colors["wall"],
             self.rect,
-            2  # border width
+            2
         )
         
         # Draw buttons
         for button in self.buttons:
             button.draw(screen)
-
+            
+        # Draw additional UI components
+        self.speed_slider.draw(screen)
+        self.algorithm_selector.draw(screen)
+        self.info_panel.draw(screen)
+        
+        # Draw algorithm info if hovering over algorithm selector
+        if self.algorithm_selector.hovered:
+            self.info_panel.show_algorithm_info(state.algorithm)
+    
     def handle_event(self, event: pygame.event.Event) -> bool:
+        # Handle button events
         for button in self.buttons:
             if button.handle_event(event):
                 return True
+                
+        # Handle additional UI component events
+        if (self.speed_slider.handle_event(event) or
+            self.algorithm_selector.handle_event(event) or
+            self.info_panel.handle_event(event)):
+            return True
+            
         return False
 
     def generate_maze(self):
         if not state.running:
             state.running = True
+            state.solution_path = []  # Clear previous solution
+            state.visited_cells = set()  # Clear visited cells
             
             # Record start time
             start_time = time.time()
@@ -362,6 +415,7 @@ class ControlPanel(UIComponent):
                 
                 # Update stats
                 state.stats["generation_time"] = time.time() - start_time
+                state.stats["cells_visited"] = 0  # Reset cells visited
                 logger.info(f"Generated maze using {state.algorithm.name}")
             else:
                 logger.error(f"Algorithm {state.algorithm.name} not implemented")
@@ -374,18 +428,30 @@ class ControlPanel(UIComponent):
             # Solve maze using selected algorithm
             algorithm = self.algorithms.get(state.algorithm)
             if algorithm:
-                state.solution_path = algorithm.solve(
+                solution = algorithm.solve(
                     state.maze,
                     state.start_pos,
                     state.end_pos
                 )
                 
+                # Handle case where no path is found
+                state.solution_path = solution if solution is not None else []
+                
                 # Update stats
                 state.stats["solving_time"] = time.time() - start_time
                 state.stats["path_length"] = len(state.solution_path)
-                logger.info(f"Solved maze using {state.algorithm.name}")
+                state.stats["cells_visited"] = len(state.visited_cells)
+                
+                if state.solution_path:
+                    logger.info(f"Solved maze using {state.algorithm.name}")
+                else:
+                    logger.warning(f"No solution found using {state.algorithm.name}")
             else:
                 logger.error(f"Algorithm {state.algorithm.name} not implemented")
+
+    def update_speed(self, new_speed: float):
+        state.speed = new_speed
+        logger.info(f"Animation speed updated to {new_speed}")
 
     def reset_maze(self):
         state.running = False
@@ -406,17 +472,22 @@ class MazeRenderer:
             self.screen.get_width(),
             self.screen.get_height()
         )
+        
+        # Calculate maze dimensions
+        self.maze_height = self.screen.get_height() - UIConstants.CONTROL_PANEL_HEIGHT
+        self.maze_width = self.screen.get_width()
     
     def clear(self):
         """Clear the screen with background color"""
         self.screen.fill(ThemeManager.get_theme(state.current_theme).colors["background"])
     
-    @error_handler
     def render(self, maze: List[List[int]], screen: pygame.Surface) -> None:
-        """Render the maze grid"""
         if self.dirty:
             self._update_cache(maze)
         self._draw_from_cache(screen)
+        
+        # Draw UI elements on top of maze
+        self.control_panel.draw(screen)
     
     def draw_cell(self, pos: Tuple[int, int], cell_type: str) -> None:
         """Draw a single cell with the specified type"""
@@ -780,11 +851,66 @@ class InfoPanel(UIComponent):
                 return True
         return False
 
-# Update ControlPanel to include new UI elements
+# Control Panel UI Elements
+# - Main control buttons (Generate, Solve, Clear, Pause/Resume)
+# - Theme toggle button (Dark/Light/High Contrast)
+# - Speed slider for animation control (1-1000)
+# - Algorithm dropdown for selection (DFS, BFS, A*, Prim's, etc.)
+# - Info panel for algorithm details (Name, Complexity, Description)
+# - Grid toggle button (Show/Hide grid lines)
+# - Stats toggle button (Show/Hide performance metrics)
+# - Screenshot button (Save current view)
+# - Save/Load buttons (Export/Import maze state)
+# - Size controls (Width/Height adjustment)
+# - Start/End position markers
+# - Animation toggle (Enable/Disable visualization)
+# - Help button (Shows tutorial/controls)
+# - Reset button (Clear all state)
+# - Fullscreen toggle
 class ControlPanel(UIComponent):
     def __init__(self, screen_width: int, screen_height: int):
         super().__init__()
-        # ... (existing initialization code) ...
+        self.rect = pygame.Rect(0, screen_height - UIConstants.CONTROL_PANEL_HEIGHT,
+                              screen_width, UIConstants.CONTROL_PANEL_HEIGHT)
+        
+        # Initialize buttons
+        button_y = screen_height - UIConstants.CONTROL_PANEL_HEIGHT + UIConstants.BUTTON_PADDING
+        self.buttons = [
+            Button(
+                UIConstants.BUTTON_PADDING,
+                button_y,
+                100,
+                UIConstants.BUTTON_HEIGHT,
+                "Generate",
+                self.generate_maze
+            ),
+            Button(
+                UIConstants.BUTTON_PADDING + 120,
+                button_y, 
+                100,
+                UIConstants.BUTTON_HEIGHT,
+                "Solve",
+                self.solve_maze
+            ),
+            Button(
+                UIConstants.BUTTON_PADDING + 240,
+                button_y,
+                100,
+                UIConstants.BUTTON_HEIGHT,
+                "Clear",
+                self.clear_maze
+            )
+        ]
+        
+        # Theme toggle button
+        self.theme_button = Button(
+            screen_width - 320,
+            button_y,
+            80,
+            UIConstants.BUTTON_HEIGHT,
+            "Theme",
+            self.toggle_theme
+        )
         
         # Add speed slider
         self.speed_slider = Slider(
@@ -829,3 +955,4 @@ class ControlPanel(UIComponent):
                 self.speed_slider.handle_event(event) or
                 self.algorithm_selector.handle_event(event) or
                 self.info_panel.handle_event(event))
+

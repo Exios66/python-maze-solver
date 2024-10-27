@@ -67,7 +67,10 @@ class DFSMazeGenerator(MazeAlgorithm):
             
             return False
         
-        dfs(start[0], start[1])
+        # Return empty list if no path is found
+        if not dfs(start[0], start[1]):
+            return []
+        
         return list(reversed(path))
 
 class BFSMazeGenerator(MazeAlgorithm):
