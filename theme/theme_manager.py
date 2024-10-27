@@ -15,8 +15,8 @@ class ThemeManager:
             "start": (50, 205, 50),
             "end": (220, 20, 60),
             "text": (255, 255, 255),
-            "button": (0, 128, 128),
-            "button_hover": (0, 153, 153),
+            "button": (100, 100, 100),  # Normal button color
+            "button_hover": (120, 120, 120),  # Button color when hovered
             "slider": (0, 191, 255),
         }),
         "light": Theme("Light", {

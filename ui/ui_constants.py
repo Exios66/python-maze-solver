@@ -1,0 +1,6 @@
+class UIConstants:
+    CONTROL_PANEL_HEIGHT = 100
+    BUTTON_PADDING = 10
+    BUTTON_WIDTH = 120
+    BUTTON_HEIGHT = 40
+

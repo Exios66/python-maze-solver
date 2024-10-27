@@ -236,3 +236,45 @@ class PrimMazeGenerator(MazeAlgorithm):
                         walls.append((new_x, new_y, to_x, to_y))
         
         return maze
+        
+    def solve(self, maze: List[List[int]], start: Tuple[int, int], end: Tuple[int, int]) -> List[Tuple[int, int]]:
+        """
+        Solve the maze using BFS to find the shortest path from start to end
+        """
+        from collections import deque
+        
+        # Check if start and end positions are valid
+        if (not (0 <= start[0] < len(maze[0]) and 0 <= start[1] < len(maze)) or
+            not (0 <= end[0] < len(maze[0]) and 0 <= end[1] < len(maze)) or
+            maze[start[1]][start[0]] == 1 or maze[end[1]][end[0]] == 1):
+            return []
+        
+        # Initialize queue with start position and its path
+        queue = deque([(start, [start])])
+        visited = {start}
+        
+        # Define possible movements (right, down, left, up)
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        
+        while queue:
+            current, path = queue.popleft()
+            
+            if current == end:
+                return path
+            
+            # Try all possible directions
+            for dx, dy in directions:
+                next_x = current[0] + dx
+                next_y = current[1] + dy
+                next_pos = (next_x, next_y)
+                
+                # Check if the next position is valid and unvisited
+                if (0 <= next_x < len(maze[0]) and 
+                    0 <= next_y < len(maze) and 
+                    maze[next_y][next_x] == 0 and 
+                    next_pos not in visited):
+                    queue.append((next_pos, path + [next_pos]))
+                    visited.add(next_pos)
+        
+        # No path found
+        return []
