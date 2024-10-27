@@ -1,14 +1,20 @@
 from abc import ABC, abstractmethod
 import random
-from algorithms.maze_algorithms import MazeGenerator
+from algorithms.maze_algorithms import MazeAlgorithm
+from typing import List, Tuple
 
-class PrimMazeGenerator(MazeGenerator):
+class PrimMazeGenerator(MazeAlgorithm):
     def __init__(self, width, height):
-        super().__init__(width, height)
+        self.width = width
+        self.height = height
         self.maze = [[1 for _ in range(width)] for _ in range(height)]
         
-    def generate(self):
+    def generate(self, width: int, height: int) -> List[List[int]]:
         # Start with a grid full of walls
+        self.width = width
+        self.height = height
+        self.maze = [[1 for _ in range(width)] for _ in range(height)]
+        
         start_x = random.randint(0, self.width - 1)
         start_y = random.randint(0, self.height - 1)
         self.maze[start_y][start_x] = 0
@@ -55,10 +61,11 @@ class PrimMazeGenerator(MazeGenerator):
                 neighbors.append((nx, ny))
         return neighbors
 
-    def solve(self, start, end):
+    def solve(self, maze: List[List[int]], start: Tuple[int, int], end: Tuple[int, int]) -> List[Tuple[int, int]]:
         """
         Solve the maze using a simple depth-first search
         Args:
+            maze: The maze to solve
             start: Starting position (x, y)
             end: End position (x, y)
         Returns:
@@ -82,9 +89,9 @@ class PrimMazeGenerator(MazeGenerator):
                 next_x, next_y = x + dx, y + dy
                 next_pos = (next_x, next_y)
                 
-                if (0 <= next_x < self.width and 
-                    0 <= next_y < self.height and 
-                    self.maze[next_y][next_x] == 0 and 
+                if (0 <= next_x < len(maze[0]) and 
+                    0 <= next_y < len(maze) and 
+                    maze[next_y][next_x] == 0 and 
                     next_pos not in visited):
                     
                     path.append(next_pos)

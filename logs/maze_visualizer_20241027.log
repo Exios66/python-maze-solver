@@ -85,3 +85,19 @@ Traceback (most recent call last):
     AlgorithmType.PRIM: PrimMazeGenerator(),
                         ^^^^^^^^^^^^^^^^^^^
 TypeError: Can't instantiate abstract class PrimMazeGenerator without an implementation for abstract method 'solve'
+2024-10-27 01:15:11,838 - INFO - [app.py:86] - Logging system initialized successfully
+2024-10-27 01:15:13,075 - ERROR - [app.py:107] - Error in game_loop: Can't instantiate abstract class PrimMazeGenerator without an implementation for abstract method 'solve'
+Traceback (most recent call last):
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 105, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 667, in game_loop
+    renderer = MazeRenderer()
+               ^^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 471, in __init__
+    self.control_panel = ControlPanel(
+                         ^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 323, in __init__
+    AlgorithmType.PRIM: PrimMazeGenerator(),
+                        ^^^^^^^^^^^^^^^^^^^
+TypeError: Can't instantiate abstract class PrimMazeGenerator without an implementation for abstract method 'solve'
