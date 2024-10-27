@@ -69,3 +69,19 @@ Traceback (most recent call last):
     state.stats["path_length"] = len(state.solution_path)
                                  ^^^^^^^^^^^^^^^^^^^^^^^^
 TypeError: object of type 'NoneType' has no len()
+2024-10-27 01:12:54,258 - INFO - [<ipython-input-1-0e1b8b8a1f73>:86] - Logging system initialized successfully
+2024-10-27 01:12:55,117 - ERROR - [<ipython-input-1-0e1b8b8a1f73>:107] - Error in game_loop: Can't instantiate abstract class PrimMazeGenerator without an implementation for abstract method 'solve'
+Traceback (most recent call last):
+  File "<ipython-input-1-0e1b8b8a1f73>", line 105, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "<ipython-input-1-0e1b8b8a1f73>", line 667, in game_loop
+    renderer = MazeRenderer()
+               ^^^^^^^^^^^^^^
+  File "<ipython-input-1-0e1b8b8a1f73>", line 471, in __init__
+    self.control_panel = ControlPanel(
+                         ^^^^^^^^^^^^^
+  File "<ipython-input-1-0e1b8b8a1f73>", line 323, in __init__
+    AlgorithmType.PRIM: PrimMazeGenerator(),
+                        ^^^^^^^^^^^^^^^^^^^
+TypeError: Can't instantiate abstract class PrimMazeGenerator without an implementation for abstract method 'solve'
