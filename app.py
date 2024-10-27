@@ -18,6 +18,7 @@ import os
 import math
 from abc import ABC, abstractmethod
 from theme.theme_manager import Theme, ThemeManager  # This replaces the previous import
+from algorithms.maze_algorithms import DFSMazeGenerator, BFSMazeGenerator
 
 # Enhanced logging configuration with better error handling and more features
 def setup_logging():
@@ -315,6 +316,12 @@ class ControlPanel(UIComponent):
             )
         ]
 
+        self.algorithms = {
+            AlgorithmType.DFS: DFSMazeGenerator(),
+            AlgorithmType.BFS: BFSMazeGenerator(),
+            # Add other algorithms as they're implemented
+        }
+
     def draw(self, screen: pygame.Surface) -> None:
         # Draw panel background
         pygame.draw.rect(
@@ -344,14 +351,41 @@ class ControlPanel(UIComponent):
     def generate_maze(self):
         if not state.running:
             state.running = True
-            state.maze = [[0 for _ in range(state.width)] for _ in range(state.height)]
-            # Add maze generation logic here
-            logger.info("Generating new maze")
+            
+            # Record start time
+            start_time = time.time()
+            
+            # Generate maze using selected algorithm
+            algorithm = self.algorithms.get(state.algorithm)
+            if algorithm:
+                state.maze = algorithm.generate(state.width, state.height)
+                
+                # Update stats
+                state.stats["generation_time"] = time.time() - start_time
+                logger.info(f"Generated maze using {state.algorithm.name}")
+            else:
+                logger.error(f"Algorithm {state.algorithm.name} not implemented")
 
     def solve_maze(self):
-        if state.running and not state.paused:
-            # Add maze solving logic here
-            logger.info("Solving maze")
+        if state.running and not state.paused and hasattr(state, 'maze'):
+            # Record start time
+            start_time = time.time()
+            
+            # Solve maze using selected algorithm
+            algorithm = self.algorithms.get(state.algorithm)
+            if algorithm:
+                state.solution_path = algorithm.solve(
+                    state.maze,
+                    state.start_pos,
+                    state.end_pos
+                )
+                
+                # Update stats
+                state.stats["solving_time"] = time.time() - start_time
+                state.stats["path_length"] = len(state.solution_path)
+                logger.info(f"Solved maze using {state.algorithm.name}")
+            else:
+                logger.error(f"Algorithm {state.algorithm.name} not implemented")
 
     def reset_maze(self):
         state.running = False
@@ -598,3 +632,200 @@ if __name__ == "__main__":
     initialize_pygame()
     setup_display()  # Make sure display is set up before game loop
     game_loop()
+
+class AlgorithmSelector(UIComponent):
+    def __init__(self, x: int, y: int, width: int, height: int):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.open = False
+        self.options = list(AlgorithmType)
+        self.option_height = 30
+        
+    def draw(self, screen: pygame.Surface) -> None:
+        theme = ThemeManager.get_theme(state.current_theme)
+        
+        # Draw main button
+        pygame.draw.rect(screen, theme.colors["button"], self.rect, border_radius=8)
+        
+        # Draw selected algorithm name
+        font = pygame.font.Font(None, 24)
+        text = state.algorithm.Meta.display_name
+        text_surface = font.render(text, True, theme.colors["text"])
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        screen.blit(text_surface, text_rect)
+        
+        # Draw dropdown if open
+        if self.open:
+            for i, algo in enumerate(self.options):
+                option_rect = pygame.Rect(
+                    self.rect.x,
+                    self.rect.bottom + i * self.option_height,
+                    self.rect.width,
+                    self.option_height
+                )
+                pygame.draw.rect(screen, theme.colors["button"], option_rect)
+                
+                text = algo.Meta.display_name
+                text_surface = font.render(text, True, theme.colors["text"])
+                text_rect = text_surface.get_rect(center=option_rect.center)
+                screen.blit(text_surface, text_rect)
+    
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.open = not self.open
+                return True
+            elif self.open:
+                # Check if clicked on an option
+                for i, algo in enumerate(self.options):
+                    option_rect = pygame.Rect(
+                        self.rect.x,
+                        self.rect.bottom + i * self.option_height,
+                        self.rect.width,
+                        self.option_height
+                    )
+                    if option_rect.collidepoint(event.pos):
+                        state.algorithm = algo
+                        self.open = False
+                        return True
+        return False
+
+# Add these new UI components after existing UI classes
+
+class Slider(UIComponent):
+    def __init__(self, rect: pygame.Rect, min_val: float, max_val: float, 
+                 current_val: float, label: str):
+        self.rect = rect
+        self.min_val = min_val
+        self.max_val = max_val
+        self.current_val = current_val
+        self.label = label
+        self.dragging = False
+        
+    def draw(self, screen: pygame.Surface) -> None:
+        theme = ThemeManager.get_theme(state.current_theme)
+        
+        # Draw slider track
+        pygame.draw.rect(screen, theme.colors["button"], self.rect, border_radius=4)
+        
+        # Calculate handle position
+        handle_x = self.rect.x + (self.rect.width * 
+                                 (self.current_val - self.min_val) / 
+                                 (self.max_val - self.min_val))
+        handle_rect = pygame.Rect(handle_x - 5, self.rect.y, 10, self.rect.height)
+        pygame.draw.rect(screen, theme.colors["slider"], handle_rect, border_radius=5)
+        
+        # Draw label and value
+        font = pygame.font.Font(None, 24)
+        label_surface = font.render(
+            f"{self.label}: {self.current_val:.1f}", 
+            True, 
+            theme.colors["text"]
+        )
+        screen.blit(label_surface, (self.rect.x, self.rect.y - 20))
+    
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.dragging = True
+                return True
+        elif event.type == pygame.MOUSEBUTTONUP:
+            self.dragging = False
+        elif event.type == pygame.MOUSEMOTION and self.dragging:
+            # Update value based on mouse position
+            rel_x = max(0, min(event.pos[0] - self.rect.x, self.rect.width))
+            self.current_val = (self.min_val + 
+                              (rel_x / self.rect.width) * 
+                              (self.max_val - self.min_val))
+            return True
+        return False
+
+class InfoPanel(UIComponent):
+    def __init__(self, rect: pygame.Rect):
+        self.rect = rect
+        self.visible = False
+        self.current_info = ""
+    
+    def draw(self, screen: pygame.Surface) -> None:
+        if not self.visible:
+            return
+            
+        theme = ThemeManager.get_theme(state.current_theme)
+        
+        # Draw panel background
+        pygame.draw.rect(screen, theme.colors["background"], self.rect)
+        pygame.draw.rect(screen, theme.colors["wall"], self.rect, 2)
+        
+        # Draw text
+        font = pygame.font.Font(None, 24)
+        lines = self.current_info.split('\n')
+        y_offset = 10
+        
+        for line in lines:
+            text_surface = font.render(line, True, theme.colors["text"])
+            screen.blit(text_surface, (self.rect.x + 10, self.rect.y + y_offset))
+            y_offset += 25
+    
+    def show_algorithm_info(self, algorithm: AlgorithmType):
+        self.current_info = (
+            f"Algorithm: {algorithm.Meta.display_name}\n"
+            f"Complexity: {algorithm.Meta.complexity}\n"
+            f"Description: {algorithm.Meta.description}"
+        )
+        self.visible = True
+    
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if not self.rect.collidepoint(event.pos):
+                self.visible = False
+                return True
+        return False
+
+# Update ControlPanel to include new UI elements
+class ControlPanel(UIComponent):
+    def __init__(self, screen_width: int, screen_height: int):
+        super().__init__()
+        # ... (existing initialization code) ...
+        
+        # Add speed slider
+        self.speed_slider = Slider(
+            pygame.Rect(
+                UIConstants.BUTTON_PADDING,
+                screen_height - UIConstants.CONTROL_PANEL_HEIGHT + 70,
+                200,
+                20
+            ),
+            MazeConfig.Animation.MIN_SPEED,
+            MazeConfig.Animation.MAX_SPEED,
+            state.speed,
+            "Animation Speed"
+        )
+        
+        # Add algorithm selector
+        self.algorithm_selector = AlgorithmSelector(
+            screen_width - 220,
+            screen_height - UIConstants.CONTROL_PANEL_HEIGHT + UIConstants.BUTTON_PADDING,
+            200,
+            UIConstants.BUTTON_HEIGHT
+        )
+        
+        # Add info panel
+        self.info_panel = InfoPanel(
+            pygame.Rect(
+                screen_width - 250,
+                screen_height - 300,
+                240,
+                200
+            )
+        )
+    
+    def draw(self, screen: pygame.Surface) -> None:
+        super().draw(screen)
+        self.speed_slider.draw(screen)
+        self.algorithm_selector.draw(screen)
+        self.info_panel.draw(screen)
+    
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        return (super().handle_event(event) or
+                self.speed_slider.handle_event(event) or
+                self.algorithm_selector.handle_event(event) or
+                self.info_panel.handle_event(event))
