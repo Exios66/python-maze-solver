@@ -2,6 +2,7 @@
 from datetime import datetime  # Change time to datetime
 import sys
 import logging as logger  # Change venv import to proper logging
+import time
 from typing import Any, Dict, List, Tuple  # Fix Tuple import
 import pygame
 
@@ -20,6 +21,7 @@ from config.maze_config import MazeConfig
 from state import MazeState
 from ui.button import Button
 from ui.slider import Slider
+from ui.algorithm_selector import AlgorithmSelector
 
 def error_handler(func):
     def wrapper(*args, **kwargs):

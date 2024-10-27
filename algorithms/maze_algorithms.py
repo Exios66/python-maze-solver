@@ -278,3 +278,4 @@ class PrimMazeGenerator(MazeAlgorithm):
         
         # No path found
         return []
+
