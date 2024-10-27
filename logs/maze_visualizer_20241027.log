@@ -1,0 +1,53 @@
+2024-10-27 00:54:47,044 - INFO - [app.py:84] - Logging system initialized successfully
+2024-10-27 00:54:47,839 - ERROR - [app.py:105] - Error in game_loop: name 'render_frame' is not defined
+Traceback (most recent call last):
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 402, in game_loop
+    render_frame(renderer)
+    ^^^^^^^^^^^^
+NameError: name 'render_frame' is not defined
+2024-10-27 00:56:04,962 - INFO - [app.py:84] - Logging system initialized successfully
+2024-10-27 00:56:05,703 - ERROR - [app.py:105] - Error in game_loop: name 'render_frame' is not defined
+Traceback (most recent call last):
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 479, in game_loop
+    render_frame(renderer)
+    ^^^^^^^^^^^^
+NameError: name 'render_frame' is not defined
+2024-10-27 00:58:39,935 - INFO - [app.py:84] - Logging system initialized successfully
+2024-10-27 00:59:18,552 - INFO - [app.py:84] - Logging system initialized successfully
+2024-10-27 01:01:53,594 - INFO - [app.py:84] - Logging system initialized successfully
+2024-10-27 01:01:54,584 - ERROR - [app.py:466] - Error in render_frame: name 'ThemeManager' is not defined
+2024-10-27 01:01:54,585 - ERROR - [app.py:105] - Error in render_frame: name 'ThemeManager' is not defined
+Traceback (most recent call last):
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 427, in render_frame
+    screen.fill(ThemeManager.get_theme(state.current_theme).colors["background"])
+                ^^^^^^^^^^^^
+NameError: name 'ThemeManager' is not defined
+2024-10-27 01:01:54,590 - ERROR - [app.py:105] - Error in game_loop: name 'ThemeManager' is not defined
+Traceback (most recent call last):
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 487, in game_loop
+    render_frame(renderer)
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jookburleson/Documents/GitHub/MVT_Nexus/python-maze-solver/app.py", line 427, in render_frame
+    screen.fill(ThemeManager.get_theme(state.current_theme).colors["background"])
+                ^^^^^^^^^^^^
+NameError: name 'ThemeManager' is not defined
+2024-10-27 01:03:59,573 - INFO - [app.py:85] - Logging system initialized successfully
+2024-10-27 01:05:33,920 - INFO - [app.py:85] - Logging system initialized successfully
+2024-10-27 01:05:38,329 - INFO - [app.py:349] - Generating new maze
+2024-10-27 01:05:42,430 - INFO - [app.py:354] - Solving maze
+2024-10-27 01:05:42,980 - INFO - [app.py:362] - Maze reset
+2024-10-27 01:05:43,161 - INFO - [app.py:362] - Maze reset
